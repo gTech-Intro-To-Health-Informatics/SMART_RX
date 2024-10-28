@@ -1,0 +1,34 @@
+# Test your FastAPI endpoints
+
+GET http://127.0.0.1:8000/
+Accept: application/json
+
+###
+
+GET http://127.0.0.1:8000/hello/User
+Accept: application/json
+
+###
+
+# Test the /chat endpoint
+
+POST http://127.0.0.1:8000/chat
+Content-Type: application/json
+
+{
+  "drug_list": ["Metformin", "Adderall"],
+  "patient_history": "Patient has a history of hypertension and ADHD",
+  "conversation_history": [
+    {
+      "role": "user",
+      "content": "Can I take Metformin and Adderall at the same time?"
+    },
+    {
+      "role": "Pharma Chatbot",
+      "content": "It is advisable to flag this conversation for the PCP's review. While it is generally considered safe to take Metformin and Adderall together, your history of hypertension is a concern. Stimulants like Adderall can potentially increase blood pressure, which requires careful monitoring in patients with hypertension. Regular follow-up with your healthcare provider is crucial, as they can assess your overall health and make any necessary adjustments to your medication regimen. Please ensure you stay in contact with your PCP about any unusual symptoms or side effects you may experience while on these medications."
+    }
+  ],
+  "patient_query": "What if I get the flu while taking Metformin and Adderall?"
+}
+
+###
