@@ -1,6 +1,7 @@
 import os
 import json
 import uuid
+import requests
 from twilio.rest import Client
 from dotenv import load_dotenv
 
@@ -15,11 +16,18 @@ TWILIO_WHATSAPP_NUMBER = os.getenv("TWILIO_WHATSAPP_NUMBER")
 BASE_CONVERSATION_URL = os.getenv("BASE_CONVERSATION_URL")
 CONVERSATION_STORAGE_FILE = os.getenv("CONVERSATION_STORAGE_FILE", "conversations.json")
 
+# UltraMsg credentials
+ULTRAMSG_INSTANCE_ID = os.getenv("ULTRAMSG_INSTANCE_ID")
+ULTRAMSG_TOKEN = os.getenv("ULTRAMSG_TOKEN")
+
+# Textbelt API
+TEXTBELT_API_URL = "https://textbelt.com/text"
+TEXTBELT_API_KEY = os.getenv("TEXTBELT_API_KEY")
+
 
 def generate_conversation_id():
     """Generate a unique conversation ID."""
-    return str(uuid.uuid4())
-
+    return str(uuid.uuid4())[:4]
 
 def load_conversations():
     """Load existing conversations from the JSON file."""
@@ -61,11 +69,63 @@ def save_conversation(phone_number, conversation_id, conversation_link):
     save_conversations(conversations)
 
 
-def send_text_with_conversation(phone_number, conversation_id, conversation_link, use_whatsapp=False):
-    """Send a text or WhatsApp message with the conversation ID and link via Twilio."""
-    client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
+def obfuscate_link(link):
+    """Obfuscate the link to avoid detection as a URL."""
+    return link.replace(".", "[dot]").replace("https://", "")
 
-    message_body = f"Your conversation ID: {conversation_id}\nLink: {conversation_link}"
+
+def send_ultramsg_message(phone_number, message_body):
+    """Send a WhatsApp message using UltraMsg."""
+    url = f"https://api.ultramsg.com/{ULTRAMSG_INSTANCE_ID}/messages/chat"
+    payload = {
+        "to": phone_number,
+        "body": message_body,
+        "token": ULTRAMSG_TOKEN
+    }
+
+    try:
+        response = requests.post(url, json=payload)
+        response.raise_for_status()
+        return {"message": "Message sent successfully!", "sid": response.json().get("id")}
+    except requests.exceptions.RequestException as e:
+        raise Exception(f"Failed to send message via UltraMsg: {str(e)}")
+
+
+def send_textbelt_message(phone_number, message_body):
+    """Send an SMS message using Textbelt."""
+    payload = {
+        "phone": phone_number,
+        "message": message_body,
+        "key": TEXTBELT_API_KEY
+    }
+
+    try:
+        response = requests.post(TEXTBELT_API_URL, data=payload)
+        response.raise_for_status()
+        response_data = response.json()
+        if response_data.get("success"):
+            return {"message": "Message sent successfully via Textbelt!", "sid": response_data.get("id")}
+        else:
+            raise Exception(f"Textbelt error: {response_data.get('error')}")
+    except requests.exceptions.RequestException as e:
+        raise Exception(f"Failed to send message via Textbelt: {str(e)}")
+
+
+def send_text_with_conversation(phone_number, conversation_link, use_whatsapp=False, use_ultramsg=False, use_textbelt=False):
+    """Send a text or WhatsApp message with just the obfuscated link."""
+    # Obfuscate the conversation link
+    obfuscated_link = obfuscate_link(conversation_link)
+
+    # Create the message body
+    message_body = f"{obfuscated_link}"
+
+    if use_ultramsg:
+        return send_ultramsg_message(phone_number, message_body)
+
+    if use_textbelt:
+        return send_textbelt_message(phone_number, message_body)
+
+    client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
     from_number = TWILIO_WHATSAPP_NUMBER if use_whatsapp else TWILIO_PHONE_NUMBER
     to_number = f"whatsapp:{phone_number}" if use_whatsapp else phone_number
 
@@ -77,23 +137,24 @@ def send_text_with_conversation(phone_number, conversation_id, conversation_link
         )
         return {"message": "Message sent successfully!", "sid": message.sid}
     except Exception as e:
-        raise Exception(f"Failed to send message: {str(e)}")
+        raise Exception(f"Failed to send message via Twilio: {str(e)}")
 
 
-def create_and_send_conversation(phone_number, use_whatsapp=False):
-    """Generate conversation details, save them, and send them via SMS or WhatsApp."""
+def create_and_send_conversation(phone_number, use_whatsapp=False, use_ultramsg=False, use_textbelt=False):
+    """Generate conversation details, save them, and send just the link via SMS or WhatsApp."""
     # Load existing conversations
     conversations = load_conversations()
 
     # Check if a conversation already exists for the phone number
     existing_conversation = find_conversation_by_phone(phone_number, conversations)
     if existing_conversation:
-        # Send the existing conversation details
+        # Send the existing conversation link
         sms_response = send_text_with_conversation(
             phone_number,
-            existing_conversation["conversation_id"],
             existing_conversation["conversation_link"],
-            use_whatsapp=use_whatsapp
+            use_whatsapp=use_whatsapp,
+            use_ultramsg=use_ultramsg,
+            use_textbelt=use_textbelt
         )
 
         # Return the existing conversation details along with the SMS/WhatsApp response
@@ -112,19 +173,14 @@ def create_and_send_conversation(phone_number, use_whatsapp=False):
     save_conversation(phone_number, conversation_id, conversation_link)
 
     # Send the details via SMS or WhatsApp
-    sms_response = send_text_with_conversation(phone_number, conversation_id, conversation_link, use_whatsapp=use_whatsapp)
+    sms_response = send_text_with_conversation(
+        phone_number, conversation_link, use_whatsapp=use_whatsapp, use_ultramsg=use_ultramsg, use_textbelt=use_textbelt
+    )
 
-    # Return the full response including phone number
+    # Return the full response including phone number and conversation ID
     return {
         "phone_number": phone_number,
         "conversation_id": conversation_id,
         "conversation_link": conversation_link,
         **sms_response,
     }
-
-# Example usage
-if __name__ == "__main__":
-    phone_number = "+1234567890"  # Replace with the recipient's phone number
-    use_whatsapp = True  # Set to True to send via WhatsApp, False for SMS
-    response = create_and_send_conversation(phone_number, use_whatsapp=use_whatsapp)
-    print(response)

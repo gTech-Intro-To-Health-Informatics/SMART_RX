@@ -40,7 +40,7 @@ async def chat_endpoint(chat_request: ChatRequest):
 @app.post("/send-conversation-link/{phone_number}")
 async def send_conversation(phone_number: str):
     try:
-        response = create_and_send_conversation(phone_number,use_whatsapp=True)
+        response = create_and_send_conversation(phone_number,use_whatsapp=False, use_ultramsg = False, use_textbelt=True)
         return response
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
