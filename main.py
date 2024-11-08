@@ -3,6 +3,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
 from crewAI.crew import pharma_chat
+from twilio_integration.twilio import create_and_send_conversation
 
 app = FastAPI()
 
@@ -35,3 +36,11 @@ async def chat_endpoint(chat_request: ChatRequest):
         patient_query=chat_request.patient_query
     )
     return ChatResponse(conversation_history=updated_conversation)
+
+@app.post("/send-conversation-link/{phone_number}")
+async def send_conversation(phone_number: str):
+    try:
+        response = create_and_send_conversation(phone_number,use_whatsapp=True)
+        return response
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

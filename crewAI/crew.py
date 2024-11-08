@@ -4,7 +4,7 @@ from langchain_openai import ChatOpenAI
 from crewai_tools import tool
 
 
-os.environ["OPENAI_API_KEY"] = "<OPENAIKEY>"
+os.environ["OPENAI_API_KEY"] = "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"
 
 chatbot_agent = Agent(
     role="Pharma Chatbot",
@@ -80,4 +80,4 @@ def pharma_chat(drug_list, patient_history, conversation_history, patient_query)
     return  conversation_history
 ph = [{'role': 'user', 'content': 'Can I take Metformin and Adderall at the same time?'}, {'role': 'Pharma Chatbot', 'content': "It is advisable to flag this conversation for the PCP's review. While it is generally considered safe to take Metformin and Adderall together, your history of hypertension is a concern. Stimulants like Adderall can potentially increase blood pressure, which requires careful monitoring in patients with hypertension. Regular follow-up with your healthcare provider is crucial, as they can assess your overall health and make any necessary adjustments to your medication regimen. Please ensure you stay in contact with your PCP about any unusual symptoms or side effects you may experience while on these medications."}]
 
-print(pharma_chat(['Metformin', 'Adderall'], 'Patient has a history of hypertension and ADHD', ph, 'What if i get the flu while taking Metformin and Adderall?'))
+# print(pharma_chat(['Metformin', 'Adderall'], 'Patient has a history of hypertension and ADHD', ph, 'What if i get the flu while taking Metformin and Adderall?'))
