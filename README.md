@@ -22,4 +22,5 @@ curl --location --request POST 'localhost:8000/send-conversation-link/[your_phon
 - All U.S. SMS and MMS messages from unregistered 10DLC phone numbers are now blocked (Additional cost and time involved for registration.)
 - $0.035 cost involved per text ($20 loaded in the wallet)
 - Whatsapp Integration instead of regular text message
+- Added environment config file + variables  
 ```
