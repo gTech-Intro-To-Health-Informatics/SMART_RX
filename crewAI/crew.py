@@ -4,7 +4,7 @@ from langchain_openai import ChatOpenAI
 from crewai_tools import tool
 
 
-os.environ["OPENAI_API_KEY"] = "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"
+os.environ["OPENAI_API_KEY"] = ""
 
 chatbot_agent = Agent(
     role="Pharma Chatbot",
