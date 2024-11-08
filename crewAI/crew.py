@@ -2,9 +2,15 @@ import os
 from crewai import Agent, Task, Crew, Process
 from langchain_openai import ChatOpenAI
 from crewai_tools import tool
+from dotenv import load_dotenv
+
+load_dotenv()
+
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 
-os.environ["OPENAI_API_KEY"] = ""
+
+os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
 
 chatbot_agent = Agent(
     role="Pharma Chatbot",
