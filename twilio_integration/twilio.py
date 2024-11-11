@@ -114,10 +114,10 @@ def send_textbelt_message(phone_number, message_body):
 def send_text_with_conversation(phone_number, conversation_link, use_whatsapp=False, use_ultramsg=False, use_textbelt=False):
     """Send a text or WhatsApp message with just the obfuscated link."""
     # Obfuscate the conversation link
-    obfuscated_link = obfuscate_link(conversation_link)
+    # obfuscated_link = obfuscate_link(conversation_link)
 
     # Create the message body
-    message_body = f"{obfuscated_link}"
+    message_body = f"{conversation_link}"
 
     if use_ultramsg:
         return send_ultramsg_message(phone_number, message_body)
