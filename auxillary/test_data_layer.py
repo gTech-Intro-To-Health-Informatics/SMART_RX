@@ -1,6 +1,7 @@
 import unittest
 import pandas as pd
 from data_layer import PatientData
+import twilio_methods
 
 # Custom PatientData class for testing with in-memory data
 class TestPatientData(unittest.TestCase):
@@ -53,7 +54,10 @@ class TestPatientData(unittest.TestCase):
         return True
     
     def test_set_new_patient_conversation(self):
-        self.patient_data.set_new_patient_conversation(3,'Juan Smith','juansmith@example.com','987-743-3210','DrugC','HistoryC','ConversationC')
+        response = twilio_methods.create_and_send_conversation("512-791-7972")
+        print("Response: {response}")
+        conversation_id = response["conversation_id"]
+        self.patient_data.set_new_patient_conversation(conversation_id,'Juan Rodriguez','juansmith@example.com','512-791-7972','DrugC','HistoryC','ConversationC')
         return True
 
 # Run the tests

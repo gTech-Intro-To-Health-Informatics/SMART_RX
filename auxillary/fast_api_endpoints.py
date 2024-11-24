@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import pandas as pd
 from data_layer import PatientData
-import twilio_integration.twilio
+import twilio_methods
 
 app = FastAPI()
 
@@ -70,7 +70,7 @@ async def set_column_data(column_name: str, request: UpdateRequest):
 
 @app.put("/set_new_chat")
 async def set_new_chat(request: CreateChat):
-    response = twilio_integration.twilio.create_and_send_conversation(request.phone)
+    response = Tables.twilio.create_and_send_conversation(request.phone)
     conversation_id = response["conversation_id"]
     return await set_new_patient_conversation(conversation_id,request.name,request.email,request.phone,request.drugs,request.patient_history,request.conversation_history)
 
