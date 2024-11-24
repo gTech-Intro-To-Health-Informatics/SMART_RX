@@ -48,6 +48,14 @@ class TestPatientData(unittest.TestCase):
         # Test retrieval of a non-existent column
         self.assertEqual(self.patient_data.get_column_data_by_id("nonexistent_column", 1), "Column 'nonexistent_column' not found in the CSV file.")
 
+    def test_get_all_conversation_data(self):
+        print(self.patient_data.get_all_conversation_data())
+        return True
+    
+    def test_set_new_patient_conversation(self):
+        self.patient_data.set_new_patient_conversation(3,'Juan Smith','juansmith@example.com','987-743-3210','DrugC','HistoryC','ConversationC')
+        return True
+
 # Run the tests
 if __name__ == '__main__':
     unittest.main()

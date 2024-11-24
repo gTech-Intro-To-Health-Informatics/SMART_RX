@@ -44,6 +44,9 @@ class PatientData:
     def get_conversation_history(self, id_value):
         return self.get_column_data_by_id('conversation_history', id_value)
     
+    def get_all_conversation_data(self):
+        json_string = self.df.to_json(orient='records')
+        return json_string
 
     # Methods to update specific columns by ID
     def set_name(self, id_value, new_value):
@@ -63,6 +66,10 @@ class PatientData:
 
     def set_conversation_history(self, id_value, new_value):
         self.update_column_by_id('conversation_history', id_value, new_value)
+
+    def set_new_patient_conversation(self,id,name,email,phone,drugs,patient_history,conversation_history):
+        with open(self.file_path,'a') as doc:
+            doc.write(f"\n{id},{name},{email},{phone},{drugs},{patient_history},{conversation_history}")
 
     # General method to update any column by ID
     def update_column_by_id(self, column_name, id_value, new_value):
