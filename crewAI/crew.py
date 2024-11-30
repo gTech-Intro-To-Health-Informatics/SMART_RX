@@ -22,7 +22,7 @@ chatbot_agent = Agent(
 
 controller_agent = Agent(
     role="Conversation Controller",
-    goal="Ensure the conversation stays on the topic of prescribed medications.",
+    goal="Ensure the conversation stays on the topic of prescribed medications. If conversation if off topic, then let the user know that you can only answer medical questions.",
     verbose=True,
     memory=False,
     backstory="You ensure that the patient stays focused on relevant medical topics."
@@ -33,13 +33,30 @@ def filter_tool(input: str) -> str:
     """Useful to filter the output from displaying to the user"""
     return " "
 
-pcp_flagging_agent = Agent(
-    role="PCP Flagging",
-    goal="Monitor for issues in the conversation that require PCP attention.",
+pharma_agent = Agent(
+    role="Pharmacy Expert",
+    goal="Answer any questions related to medications as a pharmaceutical experts.",
     verbose=True,
     memory=False,
-    backstory="You flag the conversation if a patient's concern requires further review.",
-    tools=[filter_tool],
+    backstory="You are a pharmaceutical experts and answer any questions related to medications.",
+    allow_delegation=False
+)
+
+lifestyle_agent = Agent(
+    role="Medical Lifestyle Expert",
+    goal="Answer any questions as a medical lifestyle expert.",
+    verbose=True,
+    memory=False,
+    backstory="You are a medical lifestyle expert and answer any questions related to medical lifestyle.",
+    allow_delegation=False
+)
+
+medical_agent = Agent(
+    role="Medical Expert",
+    goal="Answer any questions as a medical expert.",
+    verbose=True,
+    memory=False,
+    backstory="You are a doctor answer any questions related to medicine.",
     allow_delegation=False
 )
 
@@ -55,23 +72,34 @@ conversation_control_task = Task(
     agent=controller_agent,
 )
 
-flagging_task = Task(
-    description="Monitor for any issues or concerns related to the patient query: {patient_query}, drug list: {drug_list}, or patient history: {patient_history} that require a PCP's review and flag them.",
-    expected_output="Flag the conversation for the PCP if necessary based on patient concerns.",
-    agent=pcp_flagging_agent,
+pharma_questions_task = Task(
+    description="Monitor for any issues or concerns related to the pharmaceutical questions in the patient query: {patient_query}, drug list: {drug_list}, or patient history: {patient_history}.",
+    expected_output="Answer any questions related to medications as a pharmaceutical expert.",
+    agent=pharma_agent,
+)
+
+lifestyle_task = Task(
+    description="Monitor for any issues or concerns related to the medical lifestyle questions in the patient query: {patient_query}, drug list: {drug_list}, or patient history: {patient_history}.",
+    expected_output="Answer any questions related to medical lifestyle questions a medical lifestyle questions expert.",
+    agent=lifestyle_agent,
+)
+
+medical_task = Task(
+    description="Monitor for any issues or concerns related to the medical questions in the patient query: {patient_query}, drug list: {drug_list}, or patient history: {patient_history}.",
+    expected_output="Answer any questions related to medical questions as a doctor.",
+    agent=medical_agent,
 )
 
 
 crew = Crew(
-    manager_llm=ChatOpenAI(temperature=0, model="gpt-4"),
-    agents=[chatbot_agent, controller_agent, pcp_flagging_agent],
-    tasks=[drug_info_task, conversation_control_task, flagging_task],
+    manager_llm=ChatOpenAI(temperature=0, model="gpt-4o-mini"),
+    agents=[chatbot_agent, controller_agent, pharma_agent, lifestyle_agent, medical_agent],
+    tasks=[drug_info_task, conversation_control_task, pharma_questions_task, lifestyle_task, medical_task],
     process=Process.sequential  # Sequentially run the tasks for each interaction
 )
 
 def pharma_chat(drug_list, patient_history, conversation_history, patient_query):
     conversation_history.append({'role': 'user', 'content': patient_query})
-
     inputs = {
         'drug_list': drug_list,
         'patient_history': patient_history,
